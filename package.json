@@ -1,6 +1,6 @@
 {
   "name": "journalowl-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "MCP server for JournalOwl - AI-powered journaling integration for Claude Code, Cursor, and ChatGPT Agents",
   "type": "module",
   "main": "./build/index.js",

@@ -18,7 +18,7 @@ import {
   ApiError
 } from '../types/index.js';
 
-const DEFAULT_BASE_URL = 'https://api.journalowl.com/api/v1';
+const DEFAULT_BASE_URL = 'https://journalai-backend-production.up.railway.app/api/v1';
 const DEFAULT_TIMEOUT = 30000;
 
 export class JournalOwlClient {
