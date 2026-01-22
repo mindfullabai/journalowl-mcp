@@ -1,5 +1,5 @@
 {
-  "name": "@mindfulabai/journalowl-mcp",
+  "name": "journalowl-mcp",
   "version": "0.1.0",
   "description": "MCP server for JournalOwl - AI-powered journaling integration for Claude Code, Cursor, and ChatGPT Agents",
   "type": "module",
