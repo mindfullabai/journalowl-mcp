@@ -1,0 +1,51 @@
+{
+  "name": "@mindfulabai/journalowl-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for JournalOwl - AI-powered journaling integration for Claude Code, Cursor, and ChatGPT Agents",
+  "type": "module",
+  "main": "./build/index.js",
+  "bin": {
+    "journalowl-mcp": "./build/index.js"
+  },
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node build/index.js",
+    "prepare": "npm run build",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "journalowl",
+    "journaling",
+    "ai",
+    "claude",
+    "cursor"
+  ],
+  "author": "MindfulAB AI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mindfulabai/journalowl-mcp.git"
+  },
+  "homepage": "https://journalowl.com",
+  "bugs": {
+    "url": "https://github.com/mindfulabai/journalowl-mcp/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.16.0",
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
