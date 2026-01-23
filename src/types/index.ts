@@ -27,6 +27,24 @@ export interface CreateEntryInput {
   content: string;
   mood?: string;
   tags?: string[];
+  date?: string;           // ISO 8601 date for the entry (defaults to now in user timezone)
+}
+
+export interface CreateEntryMetadata {
+  timezone: string;
+  language: string;
+  writingStyle: string;
+  status: 'in_progress' | 'completed';
+}
+
+export interface MiniReview {
+  mainTopic: string;
+  sentiment: {
+    score: number;
+    label: string;
+  };
+  keyInsight: string | null;
+  themes: string[];
 }
 
 export interface ListEntriesParams {

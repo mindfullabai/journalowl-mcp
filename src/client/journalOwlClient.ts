@@ -11,6 +11,8 @@ import {
   UserProfile,
   WritingStyle,
   CreateEntryInput,
+  CreateEntryMetadata,
+  MiniReview,
   ListEntriesParams,
   SearchEntriesInput,
   ListReviewsParams,
@@ -86,14 +88,39 @@ export class JournalOwlClient {
 
   /**
    * Create a new journal entry
+   * Entry is created with status='in_progress'. Call finalizeEntry to generate AI analysis.
    */
-  async createEntry(input: CreateEntryInput): Promise<JournalEntry> {
-    const response = await this.client.post<ApiResponse<{ entry: JournalEntry }>>(
+  async createEntry(input: CreateEntryInput): Promise<{ entry: JournalEntry; metadata?: CreateEntryMetadata }> {
+    const response = await this.client.post<ApiResponse<{
+      entry: JournalEntry;
+      metadata?: CreateEntryMetadata;
+    }>>(
       '/mcp/entries',
       input
     );
 
-    return response.data.data!.entry;
+    return {
+      entry: response.data.data!.entry,
+      metadata: response.data.data!.metadata
+    };
+  }
+
+  /**
+   * Finalize an entry and generate AI analysis
+   * Changes status from 'in_progress' to 'completed'
+   */
+  async finalizeEntry(entryId: string): Promise<{ entry: JournalEntry; miniReview?: MiniReview }> {
+    const response = await this.client.post<ApiResponse<{
+      entry: JournalEntry;
+      miniReview?: MiniReview;
+    }>>(
+      `/mcp/entries/${entryId}/finalize`
+    );
+
+    return {
+      entry: response.data.data!.entry,
+      miniReview: response.data.data!.miniReview
+    };
   }
 
   /**

@@ -12,7 +12,7 @@ import { JournalOwlClient } from '../client/journalOwlClient.js';
  */
 export const createEntryTool: Tool = {
   name: 'journal_create_entry',
-  description: 'Create a new journal entry in JournalOwl. Use this to log thoughts, reflections, or daily experiences.',
+  description: 'Create a new journal entry in JournalOwl. Entry is created with status "in_progress". Use journal_finalize_entry to generate AI analysis and complete the entry.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -28,6 +28,10 @@ export const createEntryTool: Tool = {
         type: 'array',
         items: { type: 'string' },
         description: 'Optional tags to categorize the entry (e.g., ["work", "gratitude", "goals"])'
+      },
+      date: {
+        type: 'string',
+        description: 'Optional date for the entry in ISO 8601 format (e.g., "2024-01-15"). Defaults to today in your timezone.'
       }
     },
     required: ['content']
@@ -36,23 +40,95 @@ export const createEntryTool: Tool = {
 
 export async function handleCreateEntry(
   client: JournalOwlClient,
-  args: { content: string; mood?: string; tags?: string[] }
+  args: { content: string; mood?: string; tags?: string[]; date?: string }
 ) {
-  const entry = await client.createEntry({
+  const result = await client.createEntry({
     content: args.content,
     mood: args.mood,
-    tags: args.tags
+    tags: args.tags,
+    date: args.date
   });
+
+  const entry = result.entry;
+  const metadata = result.metadata;
+
+  let text = `Journal entry created!\n\n` +
+    `**ID:** ${entry.id}\n` +
+    `**Title:** ${entry.title}\n` +
+    `**Status:** ${entry.status} (use journal_finalize_entry to generate AI analysis)\n` +
+    `**Date:** ${new Date(entry.date).toLocaleDateString()}\n` +
+    `**Mood:** ${entry.mood || 'Not specified'}\n` +
+    `**Tags:** ${entry.tags.length > 0 ? entry.tags.join(', ') : 'None'}`;
+
+  if (metadata) {
+    text += `\n\n**Settings used:**\n` +
+      `- Timezone: ${metadata.timezone}\n` +
+      `- Language: ${metadata.language}\n` +
+      `- Writing Style: ${metadata.writingStyle}`;
+  }
 
   return {
     content: [{
       type: 'text' as const,
-      text: `Journal entry created successfully!\n\n` +
-        `**ID:** ${entry.id}\n` +
-        `**Title:** ${entry.title}\n` +
-        `**Date:** ${new Date(entry.date).toLocaleDateString()}\n` +
-        `**Mood:** ${entry.mood || 'Not specified'}\n` +
-        `**Tags:** ${entry.tags.length > 0 ? entry.tags.join(', ') : 'None'}`
+      text
+    }]
+  };
+}
+
+/**
+ * Tool: journal_finalize_entry
+ * Finalize an entry and generate AI analysis
+ */
+export const finalizeEntryTool: Tool = {
+  name: 'journal_finalize_entry',
+  description: 'Finalize a journal entry and generate AI analysis. This generates sentiment analysis, themes, and insights. Entry must have at least 100 characters.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      entry_id: {
+        type: 'string',
+        description: 'The ID of the journal entry to finalize'
+      }
+    },
+    required: ['entry_id']
+  }
+};
+
+export async function handleFinalizeEntry(
+  client: JournalOwlClient,
+  args: { entry_id: string }
+) {
+  const result = await client.finalizeEntry(args.entry_id);
+
+  const entry = result.entry;
+  const miniReview = result.miniReview;
+
+  let text = `Entry finalized with AI analysis!\n\n` +
+    `**ID:** ${entry.id}\n` +
+    `**Title:** ${entry.title}\n` +
+    `**Status:** ${entry.status}`;
+
+  if (miniReview) {
+    text += `\n\n**AI Analysis:**\n` +
+      `- **Main Topic:** ${miniReview.mainTopic}\n` +
+      `- **Sentiment:** ${miniReview.sentiment.label} (${miniReview.sentiment.score.toFixed(2)})\n` +
+      `- **Themes:** ${miniReview.themes.join(', ')}`;
+
+    if (miniReview.keyInsight) {
+      text += `\n\n**Key Insight:**\n${miniReview.keyInsight}`;
+    }
+  }
+
+  if (entry.analysis) {
+    if (entry.analysis.insights && entry.analysis.insights.length > 0) {
+      text += `\n\n**Insights:**\n${entry.analysis.insights.map(i => `- ${i}`).join('\n')}`;
+    }
+  }
+
+  return {
+    content: [{
+      type: 'text' as const,
+      text
     }]
   };
 }
@@ -330,6 +406,7 @@ export async function handleGetWritingStyle(client: JournalOwlClient) {
 export function getAllTools(): Tool[] {
   return [
     createEntryTool,
+    finalizeEntryTool,
     listEntriesTool,
     getEntryTool,
     searchEntriesTool,
@@ -349,6 +426,8 @@ export async function handleToolCall(
   switch (toolName) {
     case 'journal_create_entry':
       return handleCreateEntry(client, args as any);
+    case 'journal_finalize_entry':
+      return handleFinalizeEntry(client, args as any);
     case 'journal_list_entries':
       return handleListEntries(client, args as any);
     case 'journal_get_entry':
